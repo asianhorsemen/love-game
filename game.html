@@ -1,0 +1,726 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                background: linear-gradient(135deg, #ff7eb3, #ff758c);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+                color: #fff;
+                overflow-x: hidden;
+            }
+
+            .header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+                margin-bottom: 10px;
+                text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            }
+
+            .score-container {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                max-width: 90%;
+                margin-bottom: 15px;
+                background-color: rgba(255,255,255,0.2);
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .game-container {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-gap: 10px;
+                perspective: 1000px;
+                margin-bottom: 20px;
+            }
+
+            .card {
+                position: relative;
+                height: 200px;
+                width: 200px;
+                transform-style: preserve-3d;
+                transition: transform 0.5s;
+                cursor: pointer;
+            }
+
+            .card.flipped {
+                transform: rotateY(180deg);
+            }
+
+            .card-face {
+                position: absolute;
+                height: 200px;
+                width: 200px;
+                backface-visibility: hidden;
+                border-radius: 10px;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            }
+
+            .card-front {
+                background-color: #ff4d6d;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 24px;
+                color: white;
+            }
+
+            .card-front:after {
+                content: "❤️";
+                font-size: 48px;
+            }
+
+            .card-back {
+                transform: rotateY(180deg);
+                overflow: hidden;
+            }
+
+            .card-back img {
+                height: 200px;
+                width: 200px;
+                object-fit: cover;
+                border-radius: 10px;
+            }
+
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.7);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 100;
+            }
+
+            .modal-content {
+                background: linear-gradient(135deg, #ff758c, #ff7eb3);
+                padding: 20px;
+                border-radius: 15px;
+                text-align: center;
+                width: 80%;
+                max-width: 300px;
+            }
+
+            .modal-content h2 {
+                margin-bottom: 15px;
+            }
+
+            .modal-content p {
+                margin-bottom: 20px;
+            }
+
+            .btn {
+                background-color: #fff;
+                color: #ff4d6d;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 30px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.3s;
+                margin: 5px;
+            }
+
+            .btn:hover {
+                background-color: #ff4d6d;
+                color: #fff;
+            }
+
+            .hearts {
+                position: absolute;
+                font-size: 20px;
+                opacity: 0;
+                animation: float 3s ease-in-out;
+            }
+
+            /* Next Level Section */
+            .next-level {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #ff758c, #ff7eb3);
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 200;
+                padding: 20px;
+                text-align: center;
+                transform: translateX(100%);
+                transition: transform 0.5s ease-in-out;
+            }
+
+            .next-level.active {
+                display: flex;
+                transform: translateX(0);
+            }
+
+            .next-level h2 {
+                font-size: 32px;
+                margin-bottom: 20px;
+            }
+
+            .next-level p {
+                font-size: 18px;
+                margin-bottom: 30px;
+                max-width: 500px;
+            }
+
+            .next-level-content {
+                background-color: rgba(255,255,255,0.2);
+                padding: 30px;
+                border-radius: 15px;
+                max-width: 600px;
+                width: 80%;
+                position: relative;
+                right: 20px;
+            }
+
+            .next-level-content img {
+                height: 100px;
+            }
+
+            /* Quiz Styles */
+            .quiz-container {
+                width: 100%;
+            }
+
+            .question {
+                font-size: 20px;
+                margin-bottom: 20px;
+                font-weight: bold;
+            }
+
+            .options {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 30px;
+            }
+
+            .option {
+                background-color: rgba(255,255,255,0.3);
+                padding: 15px;
+                border-radius: 10px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .option:hover {
+                background-color: rgba(255,255,255,0.5);
+            }
+
+            .option.correct {
+                background-color: #4CAF50;
+                color: white;
+            }
+
+            .option.wrong {
+                background-color: #f44336;
+                color: white;
+            }
+
+            .lives-container {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .life {
+                font-size: 24px;
+                color: #ff4d6d;
+            }
+
+            .life.lost {
+                color: #ccc;
+            }
+
+            .quiz-result {
+                font-size: 24px;
+                margin-bottom: 20px;
+                font-weight: bold;
+            }
+
+            .quiz-result.success {
+                color: #4CAF50;
+            }
+
+            .quiz-result.failure {
+                color: #f44336;
+            }
+
+            .progress-container {
+                width: 100%;
+                background-color: rgba(255,255,255,0.3);
+                border-radius: 10px;
+                margin-bottom: 20px;
+            }
+
+            .progress-bar {
+                height: 10px;
+                background-color: #ff4d6d;
+                border-radius: 10px;
+                width: 0%;
+                transition: width 0.5s;
+            }
+
+            @keyframes float {
+                0% {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-100px);
+                    opacity: 0;
+                }
+            }
+
+            @media (max-width: 650px) {
+                .game-container {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                
+                .card, .card-face {
+                    height: 150px;
+                    width: 150px;
+                }
+                
+                .card-back img {
+                    height: 150px;
+                    width: 150px;
+                }
+
+                .next-level h2 {
+                    font-size: 24px;
+                }
+
+                .next-level p {
+                    font-size: 16px;
+                }
+
+                .options {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 400px) {
+                .card, .card-face {
+                    height: 130px;
+                    width: 130px;
+                }
+                
+                .card-back img {
+                    height: 130px;
+                    width: 130px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>❤️ Match Our Pictures ❤️</h1>
+            <p>Find matching pairs of cards!</p>
+        </div>
+        
+        <div class="score-container">
+            <div>Moves: <span id="moves">0</span></div>
+            <div>Matches: <span id="matches">0</span></div>
+        </div>
+        
+        <div class="game-container" id="game-board"></div>
+        
+        <div class="modal" id="win-modal">
+            <div class="modal-content">
+                <h2>❤️ Congrats! ❤️</h2>
+                <p id="final-score">You found all matches in 0 moves!</p>
+                <button class="btn" id="play-again">Play Again</button>
+                <button class="btn" id="next-level-btn">Next Level</button>
+            </div>
+        </div>
+        
+        <!-- Next Level Section -->
+        <div class="next-level" id="next-level">
+            <div class="next-level-content">
+                <img src="sticker-1.gif" alt="">
+                <h2>❤️ Love Quiz ❤️</h2>
+                
+                <div class="lives-container" id="lives">
+                    <div class="life">❤️</div>
+                    <div class="life">❤️</div>
+                    <div class="life">❤️</div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                
+                <div class="quiz-container" id="quiz-container">
+                    <div class="question" id="question"></div>
+                    <div class="options" id="options"></div>
+                </div>
+                
+                <div class="quiz-result" id="quiz-result"></div>
+                
+                <button class="btn" id="continue-btn" style="display: none;">Continue</button>
+            </div>
+        </div>
+        
+        <script>
+            // Card image sources
+            const cardImages = [
+                "card1.png", 
+                "card2.png", 
+                "card3.png", 
+                "card4.png", 
+                "card5.png", 
+                "card6.png"
+            ];
+            
+            // Create pairs of cards
+            let cards = [...cardImages, ...cardImages];
+            let moves = 0;
+            let matches = 0;
+            let flippedCards = [];
+            let lockBoard = false;
+            
+            // Game initialization
+            function initGame() {
+                moves = 0;
+                matches = 0;
+                flippedCards = [];
+                lockBoard = false;
+                
+                document.getElementById('moves').textContent = moves;
+                document.getElementById('matches').textContent = matches;
+                
+                // Shuffle cards
+                cards.sort(() => Math.random() - 0.5);
+                
+                // Clear the game board
+                const gameBoard = document.getElementById('game-board');
+                gameBoard.innerHTML = '';
+                
+                // Create cards
+                cards.forEach((imgSrc, index) => {
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+                    card.dataset.imgSrc = imgSrc;
+                    card.dataset.index = index;
+                    
+                    const cardFront = document.createElement('div');
+                    cardFront.classList.add('card-face', 'card-front');
+                    
+                    const cardBack = document.createElement('div');
+                    cardBack.classList.add('card-face', 'card-back');
+                    
+                    const img = document.createElement('img');
+                    img.src = imgSrc;
+                    img.alt = "Card Image";
+                    
+                    cardBack.appendChild(img);
+                    card.appendChild(cardFront);
+                    card.appendChild(cardBack);
+                    
+                    card.addEventListener('click', flipCard);
+                    gameBoard.appendChild(card);
+                });
+            }
+            
+            // Flip card function
+            function flipCard() {
+                if (lockBoard) return;
+                if (this === flippedCards[0]) return;
+                
+                this.classList.add('flipped');
+                
+                if (flippedCards.length === 0) {
+                    flippedCards.push(this);
+                    return;
+                }
+                
+                moves++;
+                document.getElementById('moves').textContent = moves;
+                
+                flippedCards.push(this);
+                checkForMatch();
+            }
+            
+            // Check for match function
+            function checkForMatch() {
+                const [firstCard, secondCard] = flippedCards;
+                const isMatch = firstCard.dataset.imgSrc === secondCard.dataset.imgSrc;
+                
+                if (isMatch) {
+                    matches++;
+                    document.getElementById('matches').textContent = matches;
+                    disableCards();
+                    createHearts(firstCard);
+                    createHearts(secondCard);
+                    
+                    if (matches === cardImages.length) {
+                        setTimeout(() => {
+                            document.getElementById('final-score').textContent = `You found all matches in ${moves} moves!`;
+                            document.getElementById('win-modal').style.display = 'flex';
+                        }, 1000);
+                    }
+                } else {
+                    unflipCards();
+                }
+            }
+            
+            // Disable cards function
+            function disableCards() {
+                flippedCards[0].removeEventListener('click', flipCard);
+                flippedCards[1].removeEventListener('click', flipCard);
+                resetBoard();
+            }
+            
+            // Unflip cards function
+            function unflipCards() {
+                lockBoard = true;
+                
+                setTimeout(() => {
+                    flippedCards[0].classList.remove('flipped');
+                    flippedCards[1].classList.remove('flipped');
+                    resetBoard();
+                }, 1000);
+            }
+            
+            // Reset board function
+            function resetBoard() {
+                [flippedCards, lockBoard] = [[], false];
+            }
+            
+            // Create floating hearts animation
+            function createHearts(card) {
+                const rect = card.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 5; i++) {
+                    const heart = document.createElement('div');
+                    heart.classList.add('hearts');
+                    heart.textContent = '❤️';
+                    heart.style.left = `${centerX - 10 + Math.random() * 20}px`;
+                    heart.style.top = `${centerY - 10 + Math.random() * 20}px`;
+                    document.body.appendChild(heart);
+                    
+                    setTimeout(() => {
+                        heart.remove();
+                    }, 3000);
+                }
+            }
+            
+            // Play again button
+            document.getElementById('play-again').addEventListener('click', () => {
+                document.getElementById('win-modal').style.display = 'none';
+                initGame();
+            });
+            
+            // Next level button
+            document.getElementById('next-level-btn').addEventListener('click', () => {
+                document.getElementById('win-modal').style.display = 'none';
+                document.getElementById('next-level').classList.add('active');
+                startQuiz();
+            });
+            
+            // Quiz Questions
+            const quizQuestions = [
+                {
+                    question: "Where do we first meet again? ",
+                    options: ["School", "CCP", "1128 cafe shop", "Marconi"],
+                    correct: 2
+                },
+                {
+                    question: "Where was our first lip kiss hihi?",
+                    options: ["1128 cafe", "Marconi", "School", "Bigbrew"],
+                    correct: 1
+                },
+                {
+                    question: "Who was the first person to say i love you :D ? ",
+                    options: ["Me (You)", "You (Me)", "Both at the same time", "We haven't said it yet"],
+                    correct: 1
+                },
+                {
+                    question: "what was the first movie we watch together?",
+                    options: ["Alive", "The loneliness", "The Happiness", "The sadness"],
+                    correct: 3
+                },
+            
+            {
+                question: "Who was our first baby :D",
+                options: ["Sharky", "Rosie", "Cinammon roll", "Marlon"],
+                correct: 0
+            },
+            {
+                question: "What Year did we start",
+                options: ["2022", "2023", "2024", "2025"],
+                correct: 1
+            }
+            ];
+            // Quiz Variables
+            let currentQuestion = 0;
+            let score = 0;
+            let lives = 3;
+            let quizCompleted = false;
+            
+            // Start Quiz
+            function startQuiz() {
+                currentQuestion = 0;
+                score = 0;
+                lives = 3;
+                quizCompleted = false;
+                
+                // Reset lives display
+                const lifeElements = document.querySelectorAll('.life');
+                lifeElements.forEach((life, index) => {
+                    life.classList.remove('lost');
+                    life.textContent = '❤️'; // Reset to full heart
+                });
+                
+                // Hide result and continue button
+                document.getElementById('quiz-result').textContent = '';
+                document.getElementById('continue-btn').style.display = 'none';
+                
+                // Show first question
+                showQuestion();
+            }
+            
+            // Show Question
+            function showQuestion() {
+                if (currentQuestion >= quizQuestions.length) {
+                    endQuiz();
+                    return;
+                }
+                
+                // Update progress bar
+                const progress = (currentQuestion / quizQuestions.length) * 100;
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+                
+                const question = quizQuestions[currentQuestion];
+                document.getElementById('question').textContent = question.question;
+                
+                const optionsContainer = document.getElementById('options');
+                optionsContainer.innerHTML = '';
+                
+                question.options.forEach((option, index) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.classList.add('option');
+                    optionElement.textContent = option;
+                    optionElement.dataset.index = index;
+                    optionElement.addEventListener('click', selectOption);
+                    optionsContainer.appendChild(optionElement);
+                });
+            }
+            
+            // Select Option
+            function selectOption() {
+                if (quizCompleted) return;
+                
+                const selectedIndex = parseInt(this.dataset.index);
+                const question = quizQuestions[currentQuestion];
+                const options = document.querySelectorAll('.option');
+                
+                // Disable all options
+                options.forEach(option => {
+                    option.removeEventListener('click', selectOption);
+                    option.style.cursor = 'default';
+                });
+                
+                // Mark correct and wrong answers
+                options[question.correct].classList.add('correct');
+                if (selectedIndex !== question.correct) {
+                    this.classList.add('wrong');
+                    loseLife();
+                }
+                
+                // Update score if correct
+                if (selectedIndex === question.correct) {
+                    score++;
+                }
+                
+                // Move to next question after delay
+                setTimeout(() => {
+                    currentQuestion++;
+                    if (lives > 0 && currentQuestion < quizQuestions.length) {
+                        showQuestion();
+                    } else {
+                        endQuiz();
+                    }
+                }, 1500);
+            }
+            
+            // Lose Life
+            function loseLife() {
+                lives--;
+                
+                // Update lives display - change the last active heart to a broken heart
+                const lifeElements = document.querySelectorAll('.life:not(.lost)');
+                if (lifeElements.length > 0) {
+                    const lastLife = lifeElements[lifeElements.length - 1];
+                    lastLife.textContent = '💔'; // Broken heart
+                    lastLife.classList.add('lost');
+                }
+                
+                // Check if game over
+                if (lives <= 0) {
+                    quizCompleted = true;
+                    setTimeout(endQuiz, 1000);
+                }
+            }
+            
+            // End Quiz
+            function endQuiz() {
+                quizCompleted = true;
+                
+                // Hide question and options
+                document.getElementById('question').textContent = '';
+                document.getElementById('options').innerHTML = '';
+                
+                // Show result
+                const resultElement = document.getElementById('quiz-result');
+                const passThreshold = Math.ceil(quizQuestions.length / 2);
+                
+                if (score >= passThreshold) {
+                    resultElement.textContent = `Congratulations! You scored ${score} out of ${quizQuestions.length}!`;
+                    resultElement.classList.add('success');
+                } else {
+                    resultElement.textContent = `You scored ${score} out of ${quizQuestions.length}. Try again!`;
+                    resultElement.classList.add('failure');
+                }
+                
+                // Show continue button
+                document.getElementById('continue-btn').style.display = 'inline-block';
+            }
+            
+            // Continue button in next level section
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                document.getElementById('next-level').classList.remove('active');
+                initGame();
+            });
+            
+            // Initialize the game
+            initGame();
+        </script>
+    </body>
+    </html>
